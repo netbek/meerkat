@@ -1,0 +1,20 @@
+.sass-cache
+*.bak
+*.orig
+Gemfile.lock
+bower_components
+node_modules
+/temp
+connectRest*.log
+
+# IDE files
+nbproject
+.idea
+.netbeans.xml
+
+# Dist
+/css/
+/docs/
+/img/
+/js/
+/www/

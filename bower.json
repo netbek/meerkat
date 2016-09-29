@@ -1,0 +1,34 @@
+{
+  "name": "meerkat",
+  "version": "0.1.0",
+  "ignore": [
+    "**/.*",
+    "bower_components",
+    "/css",
+    "/docs",
+    "/img",
+    "node_modules",
+    "/js",
+    "temp",
+    "test",
+    "/www"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.2",
+    "c3": "0.4.10",
+    "d3": "3.5.14",
+    "datatables.net": "~1.10.10",
+    "datatables.net-bs": "~1.10.10",
+    "jquery": "~1.11.1"
+  },
+  "resolutions": {
+    "d3": "3.5.14"
+  },
+  "devDependencies": {
+    "bourbon": "^4.2.6",
+    "breakpoint-sass": "^2.7.0",
+    "mathsass": "^0.9.5",
+    "modernizr-mixin": "^3.0.7",
+    "singularity": "^1.7.0"
+  }
+}
