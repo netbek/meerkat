@@ -18,3 +18,6 @@ nbproject
 /img/
 /js/
 /www/
+
+# Per-user gulp config
+/gulp-config-user.js

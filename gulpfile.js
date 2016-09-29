@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var del = require('del');
 var fs = require('fs');
 var gulp = require('gulp');
 var handlebars = require('handlebars');
@@ -8,7 +9,9 @@ var open = require('open');
 var os = require('os');
 var path = require('path');
 var Promise = require('bluebird');
+var rename = require('gulp-rename');
 var runSequence = require('run-sequence');
+var uglify = require('gulp-uglify');
 var webserver = require('gulp-webserver');
 
 Promise.promisifyAll(fs);
@@ -19,27 +22,13 @@ var mkdirpAsync = Promise.promisify(mkdirp);
  * Config
  ******************************************************************************/
 
-var config = {
-  'ga': {
-    'clientID': 'lorem',
-    'viewID': 'ipsum'
-  },
-  'webserver': {
-    'host': 'localhost',
-    'port': 8000,
-    'path': '/',
-    'livereload': false,
-    'directoryListing': false,
-    'open': '/www/',
-    'https': false,
-    'browsers': {
-      'default': 'firefox',
-      'darwin': 'google chrome',
-      'linux': 'google-chrome',
-      'win32': 'chrome'
-    }
-  }
-};
+var config = require('./gulp-config.js');
+
+// Override config with per-user config.
+if (fs.existsSync('./gulp-config-user.js')) {
+  var userConfig = require('./gulp-config-user.js');
+  _.merge(config, userConfig);
+}
 
 var livereloadOpen = (config.webserver.https ? 'https' : 'http') + '://' + config.webserver.host + ':' + config.webserver.port + (config.webserver.open ? config.webserver.open : '/');
 
@@ -115,9 +104,23 @@ gulp.task('livereload-reload', function (cb) {
  * Tasks
  ******************************************************************************/
 
-gulp.task('dev', function (cb) {
-  var src = 'src/index.html';
-  var dst = 'www/index.html';
+gulp.task('clean', function () {
+  return del([
+    config.dist.js,
+    config.dist.www
+  ]);
+});
+
+gulp.task('js', function (cb) {
+  gulp
+    .src([config.src.js + '**/*'])
+    .pipe(gulp.dest(config.dist.js))
+    .on('end', cb);
+});
+
+gulp.task('www', function (cb) {
+  var src = config.src.www + 'index.html';
+  var dst = config.dist.www + 'index.html';
 
   fs.readFileAsync(src, 'utf8')
     .then(function (data) {
@@ -140,13 +143,37 @@ gulp.task('dev', function (cb) {
     });
 });
 
+gulp.task('build', function (cb) {
+  runSequence(
+    'clean',
+    'js',
+    'www',
+    cb
+  );
+});
+
 gulp.task('livereload', function () {
   runSequence(
-    'dev',
+    'build',
     'webserver-init',
-    'livereload-init'
-    // 'watch:livereload'
+    'livereload-init',
+    'watch:livereload'
   );
+});
+
+/*******************************************************************************
+ * Watch tasks
+ ******************************************************************************/
+
+// Watch with livereload that doesn't rebuild docs
+gulp.task('watch:livereload', function (cb) {
+  var livereloadTask = 'livereload-reload';
+
+  _.forEach(config.watchTasks, function (watchConfig) {
+    var tasks = _.clone(watchConfig.tasks);
+    tasks.push(livereloadTask);
+    startWatch(watchConfig.files, tasks);
+  });
 });
 
 /*******************************************************************************
