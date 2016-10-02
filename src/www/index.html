@@ -5,16 +5,22 @@
     <title>Hello Analytics Reporting API V4</title>
     <meta name="google-signin-client_id" content="{{clientID}}">
     <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
+    <link href="../bower_components/c3/c3.css" rel="stylesheet" type="text/css">
+    <script src="../bower_components/d3/d3.js" charset="utf-8"></script>
+    <script src="../bower_components/c3/c3.js"></script>
     <script src="../bower_components/jquery/dist/jquery.js"></script>
+    <script src="../bower_components/lodash/dist/lodash.js"></script>
     <script src="../js/SV/Meerkat/Meerkat.js"></script>
   </head>
 
   <body>
-    <h1>Hello Analytics Reporting API V4</h1>
+    <h1>meerkat</h1>
 
     <p>
       <div class="g-signin2" data-onsuccess="onSuccess"></div>
     </p>
+
+    <div id="chart"></div>
 
     <textarea cols="80" rows="20" id="query-output"></textarea>
 
