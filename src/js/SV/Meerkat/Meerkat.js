@@ -164,11 +164,25 @@
 
       jQuery('#query-output').val(JSON.stringify(rows, null, 2));
 
-      var widthValues = _.uniq(_.map(rows, function (row) {
+      var values;
+      var xLabel;
+      var yLabel;
+      var xValues;
+      var yValues;
+      var total;
+      var chart;
+
+      //
+      jQuery('#chart').append('<section><header><h1>Mobile and tablet pageviews over browser width (2016-02-01 to 2016-10-01)</h1></header><div id="chart-1" /></section>');
+
+      xLabel = 'Browser width';
+      yLabel = 'Pageviews';
+
+      xValues = _.uniq(_.map(rows, function (row) {
         return row.width;
       }));
 
-      var metricValues = _.map(widthValues, function (width) {
+      yValues = _.map(xValues, function (width) {
         return _.sumBy(_.filter(rows, {
           'width': width
         }), function (o) {
@@ -176,24 +190,133 @@
         });
       });
 
-      var chart = c3.generate({
-        bindto: '#chart',
+      chart = c3.generate({
+        bindto: '#chart-1',
         data: {
-          x: 'Width',
-          y: 'Pageviews',
+          x: xLabel,
+          y: yLabel,
           columns: [
-            ['Pageviews'].concat(metricValues), ['Width'].concat(widthValues)
+            [yLabel].concat(yValues), [xLabel].concat(xValues)
           ],
           type: 'scatter'
         },
         axis: {
           x: {
-            label: 'Width'
+            label: xLabel
           },
           y: {
-            label: 'Pageviews'
+            label: yLabel
           }
+        },
+        legend: {
+          show: false
         }
+      });
+
+      //
+      jQuery('#chart').append('<section><header><h1>Mobile and tablet pageviews over breakpoints (2016-02-01 to 2016-10-01)</h1></header><div id="chart-2" /></section>');
+
+      xLabel = 'Breakpoint';
+      yLabel = 'Pageviews';
+
+      values = {
+        '_0': [],
+        '_480': [],
+        '_600': [],
+        '_967': [],
+        '_1140': [],
+        '_1300': [],
+        '_1700': []
+      };
+
+      _.forEach(rows, function (row) {
+        if (row.width < 480) {
+          values['_0'].push(row.metricValue);
+        }
+        else if (row.width < 600) {
+          values['_480'].push(row.metricValue);
+        }
+        else if (row.width < 967) {
+          values['_600'].push(row.metricValue);
+        }
+        else if (row.width < 1140) {
+          values['_967'].push(row.metricValue);
+        }
+        else if (row.width < 1300) {
+          values['_1140'].push(row.metricValue);
+        }
+        else if (row.width < 1700) {
+          values['_1300'].push(row.metricValue);
+        }
+        else {
+          values['_1700'].push(row.metricValue);
+        }
+      });
+
+      xValues = _.map(_.keys(values), function (value) {
+        return value.substring(1);
+      });
+      yValues = _.values(values);
+
+      chart = c3.generate({
+        bindto: '#chart-2',
+        data: {
+          columns: _.map(xValues, function (value, key) {
+            return ['' + value, _.sum(yValues[key])];
+          }),
+          type: 'donut'
+        },
+      });
+
+      //
+      jQuery('#chart').append('<section><header><h1>Mobile and tablet pageviews over frontend-components breakpoints (2016-02-01 to 2016-10-01)</h1></header><div id="chart-3" /></section>');
+
+      xLabel = 'Breakpoint';
+      yLabel = 'Pageviews';
+
+      values = {
+        '_0': [],
+        '_464': [],
+        '_752': [],
+        '_1008': [],
+        '_1360': [],
+        '_1920': []
+      };
+
+      _.forEach(rows, function (row) {
+        if (row.width < 464) {
+          values['_0'].push(row.metricValue);
+        }
+        else if (row.width < 752) {
+          values['_464'].push(row.metricValue);
+        }
+        else if (row.width < 1008) {
+          values['_752'].push(row.metricValue);
+        }
+        else if (row.width < 1360) {
+          values['_1008'].push(row.metricValue);
+        }
+        else if (row.width < 1920) {
+          values['_1360'].push(row.metricValue);
+        }
+        else {
+          values['_1920'].push(row.metricValue);
+        }
+      });
+
+      xValues = _.map(_.keys(values), function (value) {
+        return value.substring(1);
+      });
+      yValues = _.values(values);
+
+      chart = c3.generate({
+        bindto: '#chart-3',
+        data: {
+          columns: _.map(xValues, function (value, key) {
+            return ['' + value, _.sum(yValues[key])];
+          }),
+          type: 'donut'
+        },
       });
     }
   };
