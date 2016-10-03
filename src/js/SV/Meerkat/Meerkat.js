@@ -86,12 +86,8 @@
       }
     ];
 
-    var request = {
+    var desktopRequest = {
       viewId: this.config.viewID,
-      // dateRanges: [{
-      //   startDate: '2016-04-01',
-      //   endDate: '2016-10-01'
-      // }],
       samplingLevel: 'LARGE',
       metrics: [{
         expression: 'ga:pageviews'
@@ -101,43 +97,7 @@
       }],
       dimensionFilterClauses: [{
         operator: 'AND',
-        filters: [
-          // Is mobile or tablet
-          {
-            'dimensionName': 'ga:deviceCategory',
-            'operator': 'IN_LIST',
-            'expressions': [
-              'mobile',
-              'tablet'
-            ]
-          },
-          // Include
-          {
-            'dimensionName': 'ga:pagePath',
-            'operator': 'REGEXP',
-            'expressions': [
-              '/practice/*'
-            ]
-          },
-          // Exclude
-          {
-            'dimensionName': 'ga:pagePath',
-            'not': true,
-            'operator': 'REGEXP',
-            'expressions': [
-              '/practice/generating-teacher-dashboard/*'
-            ]
-          },
-          // Exclude
-          {
-            'dimensionName': 'ga:pagePath',
-            'not': true,
-            'operator': 'REGEXP',
-            'expressions': [
-              '/practice/question-list'
-            ]
-          }
-        ]
+        filters: [].concat(filterDesktop, filterPagePath)
       }],
       orderBys: [{
         'fieldName': 'ga:pageviews',
@@ -146,23 +106,51 @@
       }]
     };
 
-    // dateRanges: [{
-    //   startDate: '2016-04-01',
-    //   endDate: '2016-10-01'
-    // }],
-    //
-    // this.reports = {
-    //   mobileLast6Months: {
-    //     title: 'Mobile and tablet pageviews over browser width (2016-04-01 to 2016-10-01)',
-    //     request: request
-    //   }
-    // };
+    var mobileRequest = {
+      viewId: this.config.viewID,
+      samplingLevel: 'LARGE',
+      metrics: [{
+        expression: 'ga:pageviews'
+      }],
+      dimensions: [{
+        name: 'ga:browserSize'
+      }],
+      dimensionFilterClauses: [{
+        operator: 'AND',
+        filters: [].concat(filterMobile, filterPagePath)
+      }],
+      orderBys: [{
+        'fieldName': 'ga:pageviews',
+        'orderType': 'VALUE',
+        'sortOrder': 'DESCENDING'
+      }]
+    };
 
     this.reports = {};
 
     var _request;
 
-    _request = _.cloneDeep(request);
+    _request = _.cloneDeep(desktopRequest);
+    _request.dateRanges = [{
+      startDate: '2015-10-01',
+      endDate: '2016-04-01'
+    }];
+    this.reports.desktopLast12Months = {
+      title: 'Desktop pageviews over browser width for /practice (2015-10-01 to 2016-04-01)',
+      request: _request
+    };
+
+    _request = _.cloneDeep(desktopRequest);
+    _request.dateRanges = [{
+      startDate: '2016-04-01',
+      endDate: '2016-10-01'
+    }];
+    this.reports.desktopLast6Months = {
+      title: 'Desktop pageviews over browser width for /practice (2016-04-01 to 2016-10-01)',
+      request: _request
+    };
+
+    _request = _.cloneDeep(mobileRequest);
     _request.dateRanges = [{
       startDate: '2015-10-01',
       endDate: '2016-04-01'
@@ -172,7 +160,7 @@
       request: _request
     };
 
-    _request = _.cloneDeep(request);
+    _request = _.cloneDeep(mobileRequest);
     _request.dateRanges = [{
       startDate: '2016-04-01',
       endDate: '2016-10-01'
@@ -252,7 +240,7 @@
       }.bind(this));
     },
     displayReport: function (reportID, report) {
-      if (reportID === 'mobileLast6Months' || reportID === 'mobileLast12Months') {
+      if (reportID === 'desktopLast6Months' || reportID === 'desktopLast12Months' || reportID === 'mobileLast6Months' || reportID === 'mobileLast12Months') {
         var rows = [];
 
         _.forEach(report.response.result.reports[0].data.rows, function (row) {
