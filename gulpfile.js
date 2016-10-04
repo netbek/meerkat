@@ -4,6 +4,7 @@ var del = require('del');
 var fs = require('fs');
 var gulp = require('gulp');
 var handlebars = require('handlebars');
+var json2csv = require('json2csv');
 var livereload = require('livereload');
 var mkdirp = require('mkdirp');
 var open = require('open');
@@ -172,26 +173,53 @@ gulp.task('mobile', function (cb) {
   var Converter = csvtojson.Converter;
   var converter = new Converter({});
 
-  var devices = {};
-
   converter.on('end_parsed', function (rows) {
+    var parsed = {};
+    var totalPageviews = rows.length;
+
     _.forEach(rows, function (row) {
       var device = _.pick(row, [
-        'Browser Family',
-        'Browser Version',
         'Device Family',
         'Os Family',
-        'Os Version'
+        'Os Version',
+        'Browser Family',
+        'Browser Version'
       ]);
       var deviceID = _.values(device).join('-');
 
-      if (!_.has(devices, deviceID)) {
-        devices[deviceID] = device;
+      if (_.has(parsed, deviceID)) {
+        parsed[deviceID].pageviews++;
+      }
+      else {
+        parsed[deviceID] = device;
+        parsed[deviceID].pageviews = 1;
       }
     });
 
-    console.log(JSON.stringify(devices, null, 2));
-    console.log(_.keys(devices).length);
+    _.forEach(parsed, function (value, key) {
+      parsed[key].pageviewsPercent = _.round(value.pageviews / totalPageviews * 100, 2);
+    });
+
+    var parsedValues = _.values(parsed);
+
+    parsedValues = _.orderBy(parsedValues, ['pageviews'], ['desc']);
+
+    var fields = _.keys(parsedValues[0]);
+
+    var parsedCsv = json2csv({
+      data: parsedValues,
+      fields: fields
+    });
+
+    var dist = 'data/mobile-results.csv';
+
+    del([dist])
+      .then(function () {
+        return fs.writeFileAsync(dist, parsedCsv, 'utf8');
+      })
+      .then(function () {
+        cb();
+      });
   });
 
   fs.createReadStream(src)
