@@ -24,6 +24,11 @@
    * @return {Meerkat}
    */
   function Meerkat(config) {
+    this.RESPONSIVE_DESKTOP_6_MONTHS = 'rDesktop6Months';
+    this.RESPONSIVE_DESKTOP_PREV_6_MONTHS = 'rDesktopPrevious6Months';
+    this.RESPONSIVE_MOBILE_6_MONTHS = 'rMobile6Months';
+    this.RESPONSIVE_MOBILE_PREV_6_MONTHS = 'rMobilePrevious6Months';
+
     this.config = jQuery.extend({
       viewID: undefined, // {String}
       debug: false // {Boolean}
@@ -34,28 +39,22 @@
       console: !!console
     };
 
-    var filterDesktop = [
-      // Is mobile or tablet
-      {
-        'dimensionName': 'ga:deviceCategory',
-        'operator': 'IN_LIST',
-        'expressions': [
-          'desktop'
-        ]
-      }
-    ];
+    var filterDesktop = [{
+      'dimensionName': 'ga:deviceCategory',
+      'operator': 'IN_LIST',
+      'expressions': [
+        'desktop'
+      ]
+    }];
 
-    var filterMobile = [
-      // Is mobile or tablet
-      {
-        'dimensionName': 'ga:deviceCategory',
-        'operator': 'IN_LIST',
-        'expressions': [
-          'mobile',
-          'tablet'
-        ]
-      }
-    ];
+    var filterMobile = [{
+      'dimensionName': 'ga:deviceCategory',
+      'operator': 'IN_LIST',
+      'expressions': [
+        'mobile',
+        'tablet'
+      ]
+    }];
 
     var filterPagePath = [
       // Include
@@ -135,8 +134,8 @@
       startDate: '2015-10-01',
       endDate: '2016-04-01'
     }];
-    this.reports.desktopLast12Months = {
-      title: 'Desktop pageviews over browser width for /practice (2015-10-01 to 2016-04-01)',
+    this.reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS] = {
+      title: 'Desktop (2015-10-01 to 2016-04-01)',
       request: _request
     };
 
@@ -145,8 +144,8 @@
       startDate: '2016-04-01',
       endDate: '2016-10-01'
     }];
-    this.reports.desktopLast6Months = {
-      title: 'Desktop pageviews over browser width for /practice (2016-04-01 to 2016-10-01)',
+    this.reports[this.RESPONSIVE_DESKTOP_6_MONTHS] = {
+      title: 'Desktop (2016-04-01 to 2016-10-01)',
       request: _request
     };
 
@@ -155,8 +154,8 @@
       startDate: '2015-10-01',
       endDate: '2016-04-01'
     }];
-    this.reports.mobileLast12Months = {
-      title: 'Mobile and tablet pageviews over browser width for /practice (2015-10-01 to 2016-04-01)',
+    this.reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS] = {
+      title: 'Mobile and tablet (2015-10-01 to 2016-04-01)',
       request: _request
     };
 
@@ -165,8 +164,8 @@
       startDate: '2016-04-01',
       endDate: '2016-10-01'
     }];
-    this.reports.mobileLast6Months = {
-      title: 'Mobile and tablet pageviews over browser width for /practice (2016-04-01 to 2016-10-01)',
+    this.reports[this.RESPONSIVE_MOBILE_6_MONTHS] = {
+      title: 'Mobile and tablet (2016-04-01 to 2016-10-01)',
       request: _request
     };
   }
@@ -213,6 +212,8 @@
      * @return {Promise}
      */
     queryReports: function () {
+      jQuery('#charts').append('<p style="margin-top: 2em;">Loading data ...</p>');
+
       return Promise.mapSeries(_.keys(this.reports), function (key) {
           return new Promise(function (resolve, reject) {
             gapi.client
@@ -234,79 +235,166 @@
           return Promise.resolve(this.reports);
         }.bind(this));
     },
-    displayReports: function (reports) {
-      _.forEach(reports, function (report, reportID) {
-        this.displayReport(reportID, report);
-      }.bind(this));
+    parseRows: function (rows) {
+      var parsed = [];
+
+      _.forEach(rows, function (row) {
+        var dimensions = row.dimensions[0].split('x');
+
+        // Exclude unspecified dimensions.
+        if (dimensions.length < 2) {
+          return;
+        }
+
+        parsed.push({
+          width: Number(dimensions[0]),
+          height: Number(dimensions[1]),
+          metricValue: Number(row.metrics[0].values[0])
+        });
+      });
+
+      parsed = _.orderBy(parsed, 'width');
+
+      return parsed;
     },
-    displayReport: function (reportID, report) {
-      if (reportID === 'desktopLast6Months' || reportID === 'desktopLast12Months' || reportID === 'mobileLast6Months' || reportID === 'mobileLast12Months') {
-        var rows = [];
+    parseData: function (rows) {
+      var widthValues = _.uniq(_.map(rows, function (row) {
+        return row.width;
+      }));
 
-        _.forEach(report.response.result.reports[0].data.rows, function (row) {
-          var dimensions = row.dimensions[0].split('x');
+      var metricValues = _.map(widthValues, function (width) {
+        return _.sumBy(_.filter(rows, {
+          'width': width
+        }), function (o) {
+          return o.metricValue;
+        });
+      });
 
-          // Exclude unspecified dimensions.
-          if (dimensions.length < 2) {
-            return;
+      return {
+        widthValues: widthValues,
+        metricValues: metricValues
+      };
+    },
+    buildChartColumns: function () {
+      var widthValues = [];
+
+      _.forEach(arguments, function (arg, index) {
+        widthValues = widthValues.concat(arg.data.widthValues);
+      });
+
+      widthValues.sort(function (a, b) {
+        return a - b;
+      });
+
+      widthValues = _.sortedUniq(widthValues);
+
+      var metricValues = [];
+
+      _.forEach(arguments, function (arg, index) {
+        var values = _.map(widthValues, function (width) {
+          var i = _.indexOf(arg.data.widthValues, width);
+
+          if (i < 0) {
+            return 0;
           }
-
-          rows.push({
-            width: Number(dimensions[0]),
-            height: Number(dimensions[1]),
-            metricValue: Number(row.metrics[0].values[0])
-          });
-        });
-
-        rows = _.orderBy(rows, 'width');
-
-        var xLabel;
-        var yLabel;
-        var xValues;
-        var yValues;
-        var chart;
-
-        //
-        jQuery('#charts').append('<section><header><h1>' + report.title + '</h1></header><div id="chart-' + reportID + '" /></section>');
-
-        xLabel = 'Browser width';
-        yLabel = 'Pageviews';
-
-        xValues = _.uniq(_.map(rows, function (row) {
-          return row.width;
-        }));
-
-        yValues = _.map(xValues, function (width) {
-          return _.sumBy(_.filter(rows, {
-            'width': width
-          }), function (o) {
-            return o.metricValue;
-          });
-        });
-
-        chart = c3.generate({
-          bindto: '#chart-' + reportID,
-          data: {
-            x: xLabel,
-            y: yLabel,
-            columns: [
-              [yLabel].concat(yValues), [xLabel].concat(xValues)
-            ],
-            type: 'bar'
-          },
-          axis: {
-            x: {
-              label: xLabel
-            },
-            y: {
-              label: yLabel
-            }
-          },
-          legend: {
-            show: false
+          else {
+            return arg.data.metricValues[i];
           }
         });
-      }
+
+        metricValues[index] = [arg.yLabel].concat(values);
+      });
+
+      return [
+        [arguments[0].xLabel].concat(widthValues)
+      ].concat(metricValues);
+    },
+    displayReports: function (reports) {
+      jQuery('#charts').empty();
+
+      var rDesktop6Rows = this.parseRows(reports[this.RESPONSIVE_DESKTOP_6_MONTHS].response.result.reports[0].data.rows);
+      var rDesktopPrev6Rows = this.parseRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
+      var rMobile6Rows = this.parseRows(reports[this.RESPONSIVE_MOBILE_6_MONTHS].response.result.reports[0].data.rows);
+      var rMobilePrev6Rows = this.parseRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
+
+      var rDesktop6Data = this.parseData(rDesktop6Rows);
+      var rDesktopPrev6Data = this.parseData(rDesktopPrev6Rows);
+      var rMobile6Data = this.parseData(rMobile6Rows);
+      var rMobilePrev6Data = this.parseData(rMobilePrev6Rows);
+
+      var id = 0;
+      var title;
+      var columns;
+      var xLabel = 'Browser width';
+      var yLabel = 'Pageviews';
+
+      title = 'Responsive theme: Desktop v Mobile - Last 6 months';
+      columns = this.buildChartColumns({
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
+        data: rDesktop6Data
+      }, {
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
+        data: rMobile6Data
+      });
+      this.displayChart(++id, title, columns, xLabel, yLabel);
+
+      title = 'Responsive theme: Desktop v Mobile - Previous 6 months';
+      columns = this.buildChartColumns({
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
+        data: rDesktopPrev6Data
+      }, {
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
+        data: rMobilePrev6Data
+      });
+      this.displayChart(++id, title, columns, xLabel, yLabel);
+
+      title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop';
+      columns = this.buildChartColumns({
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
+        data: rDesktopPrev6Data
+      }, {
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
+        data: rDesktop6Data
+      });
+      this.displayChart(++id, title, columns, xLabel, yLabel);
+
+      title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile';
+      columns = this.buildChartColumns({
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
+        data: rMobilePrev6Data
+      }, {
+        xLabel: xLabel,
+        yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
+        data: rMobile6Data
+      });
+      this.displayChart(++id, title, columns, xLabel, yLabel);
+    },
+    displayChart: function (id, title, columns, xLabel, yLabel) {
+      jQuery('#charts').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+
+      var chart = c3.generate({
+        bindto: '#chart-' + id,
+        data: {
+          x: xLabel,
+          columns: columns,
+          type: 'scatter'
+        },
+        axis: {
+          x: {
+            label: xLabel
+          },
+          y: {
+            label: yLabel
+          }
+        }
+      });
     }
 
     // displayResults: function (response) {
@@ -340,7 +428,7 @@
     //   var chart;
     //
     //   //
-    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet pageviews over browser width (2016-04-01 to 2016-10-01)</h1></header><div id="chart-1" /></section>');
+    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet over browser width (2016-04-01 to 2016-10-01)</h1></header><div id="chart-1" /></section>');
     //
     //   xLabel = 'Browser width';
     //   yLabel = 'Pageviews';
@@ -381,7 +469,7 @@
     //   });
     //
     //   //
-    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet pageviews over breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-2" /></section>');
+    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet over breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-2" /></section>');
     //
     //   xLabel = 'Breakpoint';
     //   yLabel = 'Pageviews';
@@ -436,7 +524,7 @@
     //   });
     //
     //   //
-    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet pageviews over frontend-components breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-3" /></section>');
+    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet over frontend-components breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-3" /></section>');
     //
     //   xLabel = 'Breakpoint';
     //   yLabel = 'Pageviews';

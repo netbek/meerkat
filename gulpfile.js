@@ -180,4 +180,4 @@ gulp.task('watch:livereload', function (cb) {
  * Default task
  ******************************************************************************/
 
-gulp.task('default', ['livereload']);
+gulp.task('default', ['build']);
