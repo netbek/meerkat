@@ -247,7 +247,7 @@
 
       var title;
       var columns;
-      var xLabel = 'Browser width';
+      var xLabel = 'Screen width';
       var yLabel = 'Pageviews';
 
       title = 'Mobile theme: Top 25 devices by pageviews with known screen size (' + knownDevices.length + ' devices) - 2016-09-28 to 2016-10-03';
@@ -256,7 +256,7 @@
         yLabel: yLabel,
         data: mData
       });
-      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
     },
     parseMobileRows: function (rows) {
       var parsed = [];
@@ -403,7 +403,25 @@
 
       var title;
       var columns;
-      var xLabel = 'Browser width';
+      var legacyBreakpoints = [
+        0,
+        480,
+        600,
+        967,
+        1140,
+        1300,
+        1700
+      ];
+      var frontendComponentsBreakpoints = [
+        0,
+        464,
+        752,
+        1008,
+        1360,
+        1920
+      ];
+
+      var xLabel = 'Screen width';
       var yLabel = 'Pageviews';
 
       title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
@@ -416,7 +434,7 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
         data: rMobile6Data
       });
-      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Desktop v Mobile devices - Previous 6 months';
       columns = this.buildResponsiveChartColumns({
@@ -428,7 +446,7 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
         data: rMobilePrev6Data
       });
-      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop devices';
       columns = this.buildResponsiveChartColumns({
@@ -440,7 +458,7 @@
         yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
         data: rDesktop6Data
       });
-      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile devices';
       columns = this.buildResponsiveChartColumns({
@@ -452,9 +470,15 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
         data: rMobile6Data
       });
-      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+
+      title = 'Responsive theme: Legacy breakpoints - Last 6 months';
+      this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), legacyBreakpoints);
+
+      title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
+      this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), frontendComponentsBreakpoints);
     },
-    displayChart: function (id, title, columns, xLabel, yLabel) {
+    plotPageviewsOverWidth: function (id, title, columns, xLabel, yLabel) {
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
 
       var chart = c3.generate({
@@ -483,185 +507,46 @@
           }
         }
       });
-    }
+    },
+    plotBreakpoints: function (id, title, rows, breakpoints) {
+      var values = {};
 
-    // displayResults: function (response) {
-    //   var rows = [];
-    //
-    //   _.forEach(response.result.reports[0].data.rows, function (row) {
-    //     var dimensions = row.dimensions[0].split('x');
-    //
-    //     // Exclude unspecified dimensions.
-    //     if (dimensions.length < 2) {
-    //       return;
-    //     }
-    //
-    //     rows.push({
-    //       width: Number(dimensions[0]),
-    //       height: Number(dimensions[1]),
-    //       metricValue: Number(row.metrics[0].values[0])
-    //     });
-    //   });
-    //
-    //   rows = _.orderBy(rows, 'width');
-    //
-    //   jQuery('#query-output').val(JSON.stringify(rows, null, 2));
-    //
-    //   var values;
-    //   var xLabel;
-    //   var yLabel;
-    //   var xValues;
-    //   var yValues;
-    //   var total;
-    //   var chart;
-    //
-    //   //
-    //   jQuery('#content').append('<section><header><h1>Mobile and tablet over browser width (2016-04-01 to 2016-10-01)</h1></header><div id="chart-1" /></section>');
-    //
-    //   xLabel = 'Browser width';
-    //   yLabel = 'Pageviews';
-    //
-    //   xValues = _.uniq(_.map(rows, function (row) {
-    //     return row.width;
-    //   }));
-    //
-    //   yValues = _.map(xValues, function (width) {
-    //     return _.sumBy(_.filter(rows, {
-    //       'width': width
-    //     }), function (o) {
-    //       return o.metricValue;
-    //     });
-    //   });
-    //
-    //   chart = c3.generate({
-    //     bindto: '#chart-1',
-    //     data: {
-    //       x: xLabel,
-    //       y: yLabel,
-    //       columns: [
-    //         [yLabel].concat(yValues), [xLabel].concat(xValues)
-    //       ],
-    //       type: 'scatter'
-    //     },
-    //     axis: {
-    //       x: {
-    //         label: xLabel
-    //       },
-    //       y: {
-    //         label: yLabel
-    //       }
-    //     },
-    //     legend: {
-    //       show: false
-    //     }
-    //   });
-    //
-    //   //
-    //   jQuery('#content').append('<section><header><h1>Mobile and tablet over breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-2" /></section>');
-    //
-    //   xLabel = 'Breakpoint';
-    //   yLabel = 'Pageviews';
-    //
-    //   values = {
-    //     '_0': [],
-    //     '_480': [],
-    //     '_600': [],
-    //     '_967': [],
-    //     '_1140': [],
-    //     '_1300': [],
-    //     '_1700': []
-    //   };
-    //
-    //   _.forEach(rows, function (row) {
-    //     if (row.width < 480) {
-    //       values['_0'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 600) {
-    //       values['_480'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 967) {
-    //       values['_600'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 1140) {
-    //       values['_967'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 1300) {
-    //       values['_1140'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 1700) {
-    //       values['_1300'].push(row.metricValue);
-    //     }
-    //     else {
-    //       values['_1700'].push(row.metricValue);
-    //     }
-    //   });
-    //
-    //   xValues = _.map(_.keys(values), function (value) {
-    //     return value.substring(1);
-    //   });
-    //   yValues = _.values(values);
-    //
-    //   chart = c3.generate({
-    //     bindto: '#chart-2',
-    //     data: {
-    //       columns: _.map(xValues, function (value, key) {
-    //         return ['' + value, _.sum(yValues[key])];
-    //       }),
-    //       type: 'donut'
-    //     },
-    //   });
-    //
-    //   //
-    //   jQuery('#content').append('<section><header><h1>Mobile and tablet over frontend-components breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-3" /></section>');
-    //
-    //   xLabel = 'Breakpoint';
-    //   yLabel = 'Pageviews';
-    //
-    //   values = {
-    //     '_0': [],
-    //     '_464': [],
-    //     '_752': [],
-    //     '_1008': [],
-    //     '_1360': [],
-    //     '_1920': []
-    //   };
-    //
-    //   _.forEach(rows, function (row) {
-    //     if (row.width < 464) {
-    //       values['_0'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 752) {
-    //       values['_464'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 1008) {
-    //       values['_752'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 1360) {
-    //       values['_1008'].push(row.metricValue);
-    //     }
-    //     else if (row.width < 1920) {
-    //       values['_1360'].push(row.metricValue);
-    //     }
-    //     else {
-    //       values['_1920'].push(row.metricValue);
-    //     }
-    //   });
-    //
-    //   xValues = _.map(_.keys(values), function (value) {
-    //     return value.substring(1);
-    //   });
-    //   yValues = _.values(values);
-    //
-    //   chart = c3.generate({
-    //     bindto: '#chart-3',
-    //     data: {
-    //       columns: _.map(xValues, function (value, key) {
-    //         return ['' + value, _.sum(yValues[key])];
-    //       }),
-    //       type: 'donut'
-    //     },
-    //   });
-    // }
+      _.forEach(breakpoints, function (breakpoint) {
+        values['_' + breakpoint] = [];
+      });
+
+      var breakpointsCount = breakpoints.length;
+
+      _.forEach(rows, function (row) {
+        var breakpoint;
+        for (var i = 0; i < breakpointsCount; i++) {
+          breakpoint = breakpoints[i];
+          if (row.width < breakpoint) {
+            values['_' + breakpoints[i - 1]].push(row.metricValue);
+            return;
+          }
+        }
+        values['_' + breakpoints[breakpointsCount - 1]].push(row.metricValue);
+      });
+
+      var xValues = _.map(_.keys(values), function (value) {
+        return value.substring(1);
+      });
+
+      var yValues = _.values(values);
+
+      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+
+      var chart = c3.generate({
+        bindto: '#chart-' + id,
+        data: {
+          columns: _.map(xValues, function (value, key) {
+            return ['' + value, _.sum(yValues[key])];
+          }),
+          type: 'donut'
+        },
+      });
+    }
   };
 
   return Meerkat;
