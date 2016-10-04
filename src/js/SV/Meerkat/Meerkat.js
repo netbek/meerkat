@@ -391,7 +391,17 @@
             label: xLabel
           },
           y: {
-            label: yLabel
+            label: yLabel,
+            tick: {
+              format: d3.format('s')
+            }
+          }
+        },
+        tooltip: {
+          format: {
+            value: function (value, ratio, id) {
+              return d3.format(',')(value);
+            }
           }
         }
       });
