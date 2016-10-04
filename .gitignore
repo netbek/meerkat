@@ -12,6 +12,9 @@ nbproject
 .idea
 .netbeans.xml
 
+# Logs and other data
+/data/
+
 # Dist
 /css/
 /docs/
