@@ -211,11 +211,18 @@ gulp.task('mobile', function (cb) {
       fields: fields
     });
 
-    var dist = 'data/mobile-results.csv';
+    var distCsv = 'data/mobile-results.csv';
+    var distJson = 'data/mobile-results.json';
 
-    del([dist])
+    del([
+        distCsv,
+        distJson
+      ])
       .then(function () {
-        return fs.writeFileAsync(dist, parsedCsv, 'utf8');
+        return fs.writeFileAsync(distCsv, parsedCsv, 'utf8');
+      })
+      .then(function () {
+        return fs.writeFileAsync(distJson, JSON.stringify(parsedValues, null, 2), 'utf8');
       })
       .then(function () {
         cb();
