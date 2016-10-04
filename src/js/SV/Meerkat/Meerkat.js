@@ -56,34 +56,13 @@
       ]
     }];
 
-    var filterPagePath = [
-      // Include
-      {
-        'dimensionName': 'ga:pagePath',
-        'operator': 'REGEXP',
-        'expressions': [
-          '/practice/*'
-        ]
-      },
-      // Exclude
-      {
-        'dimensionName': 'ga:pagePath',
-        'not': true,
-        'operator': 'REGEXP',
-        'expressions': [
-          '/practice/generating-teacher-dashboard/*'
-        ]
-      },
-      // Exclude
-      {
-        'dimensionName': 'ga:pagePath',
-        'not': true,
-        'operator': 'REGEXP',
-        'expressions': [
-          '/practice/question-list'
-        ]
-      }
-    ];
+    var filterPagePath = [{
+      'dimensionName': 'ga:pagePath',
+      'operator': 'REGEXP',
+      'expressions': [
+        '/practice/.+/exercise'
+      ]
+    }];
 
     var desktopRequest = {
       viewId: this.config.viewID,
@@ -135,7 +114,7 @@
       endDate: '2016-04-01'
     }];
     this.reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS] = {
-      title: 'Desktop (2015-10-01 to 2016-04-01)',
+      title: 'Desktop devices (2015-10-01 to 2016-04-01)',
       request: _request
     };
 
@@ -145,7 +124,7 @@
       endDate: '2016-10-01'
     }];
     this.reports[this.RESPONSIVE_DESKTOP_6_MONTHS] = {
-      title: 'Desktop (2016-04-01 to 2016-10-01)',
+      title: 'Desktop devices (2016-04-01 to 2016-10-01)',
       request: _request
     };
 
@@ -155,7 +134,7 @@
       endDate: '2016-04-01'
     }];
     this.reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS] = {
-      title: 'Mobile and tablet (2015-10-01 to 2016-04-01)',
+      title: 'Mobile and tablet devices (2015-10-01 to 2016-04-01)',
       request: _request
     };
 
@@ -165,7 +144,7 @@
       endDate: '2016-10-01'
     }];
     this.reports[this.RESPONSIVE_MOBILE_6_MONTHS] = {
-      title: 'Mobile and tablet (2016-04-01 to 2016-10-01)',
+      title: 'Mobile and tablet devices (2016-04-01 to 2016-10-01)',
       request: _request
     };
   }
@@ -328,7 +307,7 @@
       var xLabel = 'Browser width';
       var yLabel = 'Pageviews';
 
-      title = 'Responsive theme: Desktop v Mobile - Last 6 months';
+      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
       columns = this.buildChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
@@ -340,7 +319,7 @@
       });
       this.displayChart(++id, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Desktop v Mobile - Previous 6 months';
+      title = 'Responsive theme: Desktop v Mobile devices - Previous 6 months';
       columns = this.buildChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
@@ -352,7 +331,7 @@
       });
       this.displayChart(++id, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop';
+      title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop devices';
       columns = this.buildChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
@@ -364,7 +343,7 @@
       });
       this.displayChart(++id, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile';
+      title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile devices';
       columns = this.buildChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
