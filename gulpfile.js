@@ -1,4 +1,5 @@
 var _ = require('lodash');
+var csvtojson = require('csvtojson');
 var del = require('del');
 var fs = require('fs');
 var gulp = require('gulp');
@@ -159,6 +160,42 @@ gulp.task('livereload', function () {
     'livereload-init',
     'watch:livereload'
   );
+});
+
+/*******************************************************************************
+ * Mobile tasks
+ ******************************************************************************/
+
+gulp.task('mobile', function (cb) {
+  var src = 'data/mobile.csv';
+
+  var Converter = csvtojson.Converter;
+  var converter = new Converter({});
+
+  var devices = {};
+
+  converter.on('end_parsed', function (rows) {
+    _.forEach(rows, function (row) {
+      var device = _.pick(row, [
+        'Browser Family',
+        'Browser Version',
+        'Device Family',
+        'Os Family',
+        'Os Version'
+      ]);
+      var deviceID = _.values(device).join('-');
+
+      if (!_.has(devices, deviceID)) {
+        devices[deviceID] = device;
+      }
+    });
+
+    console.log(JSON.stringify(devices, null, 2));
+    console.log(_.keys(devices).length);
+  });
+
+  fs.createReadStream(src)
+    .pipe(converter);
 });
 
 /*******************************************************************************
