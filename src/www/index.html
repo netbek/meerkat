@@ -19,17 +19,15 @@
   <body style="margin: 2em;">
     <h1>Practice</h1>
 
-    <div id="charts">
-      <div class="g-signin2" data-onsuccess="onSuccess"></div>
-    </div>
+    <div id="content"></div>
+
+    <div class="g-signin2" data-onsuccess="onSuccess"></div>
 
     <script>
       function onSuccess() {
         var meerkat = new SV.Meerkat({viewID: '{{viewID}}'});
 
-        meerkat.init().queryReports().then(function (reports) {
-          meerkat.displayReports(reports);
-        });
+        meerkat.init().run();
       }
     </script>
 

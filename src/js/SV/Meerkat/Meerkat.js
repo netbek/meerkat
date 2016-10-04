@@ -39,6 +39,8 @@
       console: !!console
     };
 
+    this.uniqID = 0;
+
     var filterDesktop = [{
       'dimensionName': 'ga:deviceCategory',
       'operator': 'IN_LIST',
@@ -162,6 +164,8 @@
 
       this.log(moduleName + '.init()');
 
+      jQuery('#content').append('<p id="loading" style="margin-top: 2em;">Loading data ...</p>');
+
       this.flags.init = true;
 
       return this;
@@ -185,14 +189,112 @@
         console.debug(msg);
       }
     },
+    run: function () {
+      this.runMobile()
+        .then(function () {
+          return this.runResponsive();
+        }.bind(this))
+        .then(function () {
+          jQuery('#loading').remove();
+        });
+    },
+    runMobile: function () {
+      return this.queryMobileReports()
+        .then(function (data) {
+          this.displayMobileReports(data);
+
+          return Promise.resolve(true);
+        }.bind(this));
+    },
+    queryMobileReports: function () {
+      return new Promise(function (resolve, reject) {
+        jQuery.ajax({
+          url: 'http://localhost:8000/data/mobile-results.json',
+          dataType: 'json',
+          cache: false,
+          success: function (data) {
+            resolve(data);
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            reject(textStatus);
+          }
+        });
+      });
+    },
+    displayMobileReports: function (data) {
+      var knownDevices = [];
+
+      _.forEach(data, function (row) {
+        var device = _.pick(row, [
+          'Device Family',
+          'Os Family',
+          'Os Version',
+          'Browser Family',
+          'Browser Version'
+        ]);
+        var deviceID = _.values(device).join('-');
+        var width = Number(row['Screen Width']);
+        var height = Number(row['Screen Height']);
+
+        if (width && height && _.indexOf(knownDevices, deviceID) < 0) {
+          knownDevices.push(deviceID);
+        }
+      });
+
+      var mRows = this.parseMobileRows(data);
+
+      var mData = this.parseResponsiveData(mRows);
+
+      var title;
+      var columns;
+      var xLabel = 'Browser width';
+      var yLabel = 'Pageviews';
+
+      title = 'Mobile theme: Top 25 devices by pageviews with known screen size (' + knownDevices.length + ' devices) - 2016-09-28 to 2016-10-03';
+      columns = this.buildResponsiveChartColumns({
+        xLabel: xLabel,
+        yLabel: yLabel,
+        data: mData
+      });
+      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
+    },
+    parseMobileRows: function (rows) {
+      var parsed = [];
+
+      _.forEach(rows, function (row) {
+        var width = Number(row['Screen Width']);
+        var height = Number(row['Screen Height']);
+
+        // Exclude unspecified dimensions.
+        if (!width || !height) {
+          return;
+        }
+
+        parsed.push({
+          width: width,
+          height: height,
+          metricValue: Number(row.Pageviews)
+        });
+      });
+
+      parsed = _.orderBy(parsed, 'width');
+
+      return parsed;
+    },
+    runResponsive: function () {
+      return this.queryResponsiveReports()
+        .then(function (reports) {
+          this.displayResponsiveReports(reports);
+
+          return Promise.resolve(true);
+        }.bind(this));
+    },
     /**
-     * Query the API.
+     * Fetch data for responsive theme.
      *
      * @return {Promise}
      */
-    queryReports: function () {
-      jQuery('#charts').append('<p style="margin-top: 2em;">Loading data ...</p>');
-
+    queryResponsiveReports: function () {
       return Promise.mapSeries(_.keys(this.reports), function (key) {
           return new Promise(function (resolve, reject) {
             gapi.client
@@ -214,7 +316,7 @@
           return Promise.resolve(this.reports);
         }.bind(this));
     },
-    parseRows: function (rows) {
+    parseResponsiveRows: function (rows) {
       var parsed = [];
 
       _.forEach(rows, function (row) {
@@ -236,7 +338,7 @@
 
       return parsed;
     },
-    parseData: function (rows) {
+    parseResponsiveData: function (rows) {
       var widthValues = _.uniq(_.map(rows, function (row) {
         return row.width;
       }));
@@ -254,7 +356,7 @@
         metricValues: metricValues
       };
     },
-    buildChartColumns: function () {
+    buildResponsiveChartColumns: function () {
       var widthValues = [];
 
       _.forEach(arguments, function (arg, index) {
@@ -288,27 +390,24 @@
         [arguments[0].xLabel].concat(widthValues)
       ].concat(metricValues);
     },
-    displayReports: function (reports) {
-      jQuery('#charts').empty();
+    displayResponsiveReports: function (reports) {
+      var rDesktop6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_6_MONTHS].response.result.reports[0].data.rows);
+      var rDesktopPrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
+      var rMobile6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_6_MONTHS].response.result.reports[0].data.rows);
+      var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
 
-      var rDesktop6Rows = this.parseRows(reports[this.RESPONSIVE_DESKTOP_6_MONTHS].response.result.reports[0].data.rows);
-      var rDesktopPrev6Rows = this.parseRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
-      var rMobile6Rows = this.parseRows(reports[this.RESPONSIVE_MOBILE_6_MONTHS].response.result.reports[0].data.rows);
-      var rMobilePrev6Rows = this.parseRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
+      var rDesktop6Data = this.parseResponsiveData(rDesktop6Rows);
+      var rDesktopPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows);
+      var rMobile6Data = this.parseResponsiveData(rMobile6Rows);
+      var rMobilePrev6Data = this.parseResponsiveData(rMobilePrev6Rows);
 
-      var rDesktop6Data = this.parseData(rDesktop6Rows);
-      var rDesktopPrev6Data = this.parseData(rDesktopPrev6Rows);
-      var rMobile6Data = this.parseData(rMobile6Rows);
-      var rMobilePrev6Data = this.parseData(rMobilePrev6Rows);
-
-      var id = 0;
       var title;
       var columns;
       var xLabel = 'Browser width';
       var yLabel = 'Pageviews';
 
       title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
-      columns = this.buildChartColumns({
+      columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
         data: rDesktop6Data
@@ -317,10 +416,10 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
         data: rMobile6Data
       });
-      this.displayChart(++id, title, columns, xLabel, yLabel);
+      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Desktop v Mobile devices - Previous 6 months';
-      columns = this.buildChartColumns({
+      columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
         data: rDesktopPrev6Data
@@ -329,10 +428,10 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
         data: rMobilePrev6Data
       });
-      this.displayChart(++id, title, columns, xLabel, yLabel);
+      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop devices';
-      columns = this.buildChartColumns({
+      columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
         data: rDesktopPrev6Data
@@ -341,10 +440,10 @@
         yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
         data: rDesktop6Data
       });
-      this.displayChart(++id, title, columns, xLabel, yLabel);
+      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile devices';
-      columns = this.buildChartColumns({
+      columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
         data: rMobilePrev6Data
@@ -353,10 +452,10 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
         data: rMobile6Data
       });
-      this.displayChart(++id, title, columns, xLabel, yLabel);
+      this.displayChart(++this.uniqID, title, columns, xLabel, yLabel);
     },
     displayChart: function (id, title, columns, xLabel, yLabel) {
-      jQuery('#charts').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
 
       var chart = c3.generate({
         bindto: '#chart-' + id,
@@ -417,7 +516,7 @@
     //   var chart;
     //
     //   //
-    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet over browser width (2016-04-01 to 2016-10-01)</h1></header><div id="chart-1" /></section>');
+    //   jQuery('#content').append('<section><header><h1>Mobile and tablet over browser width (2016-04-01 to 2016-10-01)</h1></header><div id="chart-1" /></section>');
     //
     //   xLabel = 'Browser width';
     //   yLabel = 'Pageviews';
@@ -458,7 +557,7 @@
     //   });
     //
     //   //
-    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet over breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-2" /></section>');
+    //   jQuery('#content').append('<section><header><h1>Mobile and tablet over breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-2" /></section>');
     //
     //   xLabel = 'Breakpoint';
     //   yLabel = 'Pageviews';
@@ -513,7 +612,7 @@
     //   });
     //
     //   //
-    //   jQuery('#charts').append('<section><header><h1>Mobile and tablet over frontend-components breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-3" /></section>');
+    //   jQuery('#content').append('<section><header><h1>Mobile and tablet over frontend-components breakpoints (2016-04-01 to 2016-10-01)</h1></header><div id="chart-3" /></section>');
     //
     //   xLabel = 'Breakpoint';
     //   yLabel = 'Pageviews';

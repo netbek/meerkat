@@ -167,7 +167,44 @@ gulp.task('livereload', function () {
  * Mobile tasks
  ******************************************************************************/
 
+// gulp.task('lookup', function (cb) {
+//   var src = 'data/parsed.csv';
+//
+//   var Converter = csvtojson.Converter;
+//   var converter = new Converter({});
+//
+//   converter.on('end_parsed', function (rows) {
+//     var file = 'lookup.js';
+//     var data = [];
+//
+//     _.forEach(rows, function (row) {
+//       if (row['Screen Width'] && row['Screen Height']) {
+//         var device = _.pick(row, [
+//           'Device Family',
+//           'Os Family',
+//           'Os Version',
+//           'Browser Family',
+//           'Browser Version',
+//           'Screen Width',
+//           'Screen Height',
+//           'Screen Density'
+//         ]);
+//         data.push(device);
+//       }
+//     });
+//
+//     del([file])
+//       .then(function () {
+//         return fs.writeFileAsync(file, 'module.exports = ' + JSON.stringify(data, null, 2) + ';', 'utf8');
+//       });
+//   });
+//
+//   fs.createReadStream(src)
+//     .pipe(converter);
+// });
+
 gulp.task('mobile', function (cb) {
+  var deviceDB = require('./device-db.js');
   var src = 'data/mobile.csv';
 
   var Converter = csvtojson.Converter;
@@ -188,21 +225,38 @@ gulp.task('mobile', function (cb) {
       var deviceID = _.values(device).join('-');
 
       if (_.has(parsed, deviceID)) {
-        parsed[deviceID].pageviews++;
+        parsed[deviceID].Pageviews++;
       }
       else {
         parsed[deviceID] = device;
-        parsed[deviceID].pageviews = 1;
+        parsed[deviceID].Pageviews = 1;
+
+        var screenWidth = '';
+        var screenHeight = '';
+        var screenDensity = '';
+
+        var match = _.find(deviceDB, {
+          'Device Family': device['Device Family']
+        });
+        if (match) {
+          screenWidth = match['Screen Width'];
+          screenHeight = match['Screen Height'];
+          screenDensity = match['Screen Density'];
+        }
+
+        parsed[deviceID]['Screen Width'] = screenWidth;
+        parsed[deviceID]['Screen Height'] = screenHeight;
+        parsed[deviceID]['Screen Density'] = screenDensity;
       }
     });
 
-    _.forEach(parsed, function (value, key) {
-      parsed[key].pageviewsPercent = _.round(value.pageviews / totalPageviews * 100, 2);
-    });
+    // _.forEach(parsed, function (value, key) {
+    //   parsed[key].PageviewsPercent = _.round(value.Pageviews / totalPageviews * 100, 2);
+    // });
 
     var parsedValues = _.values(parsed);
 
-    parsedValues = _.orderBy(parsedValues, ['pageviews'], ['desc']);
+    parsedValues = _.orderBy(parsedValues, ['Pageviews'], ['desc']);
 
     var fields = _.keys(parsedValues[0]);
 
