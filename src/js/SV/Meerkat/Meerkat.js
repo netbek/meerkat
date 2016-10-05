@@ -24,8 +24,10 @@
    * @return {Meerkat}
    */
   function Meerkat(config) {
+    this.RESPONSIVE_DESKTOP_LTD = 'rDesktopLtd';
     this.RESPONSIVE_DESKTOP_6_MONTHS = 'rDesktop6Months';
     this.RESPONSIVE_DESKTOP_PREV_6_MONTHS = 'rDesktopPrevious6Months';
+    this.RESPONSIVE_MOBILE_LTD = 'rMobileLtd';
     this.RESPONSIVE_MOBILE_6_MONTHS = 'rMobile6Months';
     this.RESPONSIVE_MOBILE_PREV_6_MONTHS = 'rMobilePrevious6Months';
 
@@ -112,6 +114,16 @@
 
     _request = _.cloneDeep(desktopRequest);
     _request.dateRanges = [{
+      startDate: '2016-09-28',
+      endDate: '2016-10-03'
+    }];
+    this.reports[this.RESPONSIVE_DESKTOP_LTD] = {
+      title: 'Desktop devices (2016-09-28 to 2016-10-03)',
+      request: _request
+    };
+
+    _request = _.cloneDeep(desktopRequest);
+    _request.dateRanges = [{
       startDate: '2015-10-01',
       endDate: '2016-04-01'
     }];
@@ -127,6 +139,16 @@
     }];
     this.reports[this.RESPONSIVE_DESKTOP_6_MONTHS] = {
       title: 'Desktop devices (2016-04-01 to 2016-10-01)',
+      request: _request
+    };
+
+    _request = _.cloneDeep(mobileRequest);
+    _request.dateRanges = [{
+      startDate: '2016-09-28',
+      endDate: '2016-10-03'
+    }];
+    this.reports[this.RESPONSIVE_MOBILE_LTD] = {
+      title: 'Mobile and tablet devices (2016-09-28 to 2016-10-03)',
       request: _request
     };
 
@@ -197,6 +219,8 @@
         .then(function () {
           jQuery('#loading').remove();
         });
+
+      // this.runResponsive();
     },
     runMobile: function () {
       return this.queryMobileReports()
@@ -393,18 +417,23 @@
     displayResponsiveReports: function (reports) {
       var rDesktop6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_6_MONTHS].response.result.reports[0].data.rows);
       var rDesktopPrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
+      var rDesktopLtdRows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_LTD].response.result.reports[0].data.rows);
       var rMobile6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_6_MONTHS].response.result.reports[0].data.rows);
       var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
+      var rMobileLtdRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_LTD].response.result.reports[0].data.rows);
 
       var rDesktop6Data = this.parseResponsiveData(rDesktop6Rows);
       var rDesktopPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows);
       var rMobile6Data = this.parseResponsiveData(rMobile6Rows);
       var rMobilePrev6Data = this.parseResponsiveData(rMobilePrev6Rows);
 
+      var r6Data = this.parseResponsiveData(rDesktop6Rows.concat(rMobile6Rows));
+      var rPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows));
+      var rLtdData = this.parseResponsiveData(rDesktopLtdRows.concat(rMobileLtdRows));
+
       var title;
       var columns;
       var legacyBreakpoints = [
-        0,
         480,
         600,
         967,
@@ -413,7 +442,6 @@
         1700
       ];
       var frontendComponentsBreakpoints = [
-        0,
         464,
         752,
         1008,
@@ -423,6 +451,26 @@
 
       var xLabel = 'Screen width';
       var yLabel = 'Pageviews';
+
+      title = 'Responsive theme: 2016-09-28 to 2016-10-03';
+      columns = this.buildResponsiveChartColumns({
+        xLabel: xLabel,
+        yLabel: yLabel,
+        data: rLtdData
+      });
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+
+      title = 'Responsive theme: Last 6 months v Previous 6 months';
+      columns = this.buildResponsiveChartColumns({
+        xLabel: xLabel,
+        yLabel: '2015-10-01 to 2016-04-01',
+        data: rPrev6Data
+      }, {
+        xLabel: xLabel,
+        yLabel: '2016-04-01 to 2016-10-01',
+        data: r6Data
+      });
+      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
       columns = this.buildResponsiveChartColumns({
@@ -508,29 +556,44 @@
         }
       });
     },
+    findBreakpoint: function (width, breakpoints) {
+      var count = breakpoints.length;
+
+      if (!count) {
+        return;
+      }
+
+      breakpoints.sort(function (a, b) {
+        return a - b;
+      });
+
+      if (width < breakpoints[0]) {
+        return 0;
+      }
+
+      for (var i = 0; i < count - 1; i++) {
+        if (width >= breakpoints[i] && width < breakpoints[i + 1]) {
+          return breakpoints[i];
+        }
+      }
+
+      return breakpoints[count - 1];
+    },
     plotBreakpoints: function (id, title, rows, breakpoints) {
       var values = {};
+      values['_0'] = [];
 
       _.forEach(breakpoints, function (breakpoint) {
         values['_' + breakpoint] = [];
       });
 
-      var breakpointsCount = breakpoints.length;
-
       _.forEach(rows, function (row) {
-        var breakpoint;
-        for (var i = 0; i < breakpointsCount; i++) {
-          breakpoint = breakpoints[i];
-          if (row.width < breakpoint) {
-            values['_' + breakpoints[i - 1]].push(row.metricValue);
-            return;
-          }
-        }
-        values['_' + breakpoints[breakpointsCount - 1]].push(row.metricValue);
-      });
+        var breakpoint = this.findBreakpoint(row.width, breakpoints);
+        values['_' + breakpoint].push(row.metricValue);
+      }.bind(this));
 
       var xValues = _.map(_.keys(values), function (value) {
-        return value.substring(1);
+        return Number(value.substring(1));
       });
 
       var yValues = _.values(values);
@@ -541,9 +604,10 @@
         bindto: '#chart-' + id,
         data: {
           columns: _.map(xValues, function (value, key) {
-            return ['' + value, _.sum(yValues[key])];
+            var label = '' + value;
+            return [label, _.sum(yValues[key])];
           }),
-          type: 'donut'
+          type: 'pie'
         },
       });
     }
