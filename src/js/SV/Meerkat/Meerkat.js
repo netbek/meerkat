@@ -248,9 +248,10 @@
     },
     displayMobileReports: function (rows) {
       var knownDevices = [];
-
       var knownDeviceIDs = [];
       var unknownDeviceIDs = [];
+      var knownDevicePageviews = 0;
+      var unknownDevicePageviews = 0;
 
       _.forEach(rows, function (row) {
         var device = _.pick(row, [
@@ -269,9 +270,11 @@
             knownDeviceIDs.push(deviceID);
             knownDevices.push(device['Device Family']);
           }
+          knownDevicePageviews += Number(row.Pageviews);
         }
         else {
           unknownDeviceIDs.push(deviceID);
+          unknownDevicePageviews += Number(row.Pageviews);
         }
       });
 
@@ -297,8 +300,8 @@
         bindto: '#chart-' + id,
         data: {
           columns: [
-            ['Known screen sizes', knownDeviceIDs.length],
-            ['Unknown screen sizes', unknownDeviceIDs.length]
+            ['Pageviews on known screen sizes', knownDevicePageviews],
+            ['Pageviews on unknown screen sizes', unknownDevicePageviews]
           ],
           type: 'pie'
         },
