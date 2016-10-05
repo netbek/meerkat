@@ -24,10 +24,10 @@
    * @return {Meerkat}
    */
   function Meerkat(config) {
-    this.RESPONSIVE_DESKTOP_LTD = 'rDesktopLtd';
+    this.RESPONSIVE_DESKTOP_WEEK = 'rDesktopWeek';
     this.RESPONSIVE_DESKTOP_6_MONTHS = 'rDesktop6Months';
     this.RESPONSIVE_DESKTOP_PREV_6_MONTHS = 'rDesktopPrevious6Months';
-    this.RESPONSIVE_MOBILE_LTD = 'rMobileLtd';
+    this.RESPONSIVE_MOBILE_WEEK = 'rMobileWeek';
     this.RESPONSIVE_MOBILE_6_MONTHS = 'rMobile6Months';
     this.RESPONSIVE_MOBILE_PREV_6_MONTHS = 'rMobilePrevious6Months';
 
@@ -117,7 +117,7 @@
       startDate: '2016-09-28',
       endDate: '2016-10-03'
     }];
-    this.reports[this.RESPONSIVE_DESKTOP_LTD] = {
+    this.reports[this.RESPONSIVE_DESKTOP_WEEK] = {
       title: 'Desktop devices (2016-09-28 to 2016-10-03)',
       request: _request
     };
@@ -147,7 +147,7 @@
       startDate: '2016-09-28',
       endDate: '2016-10-03'
     }];
-    this.reports[this.RESPONSIVE_MOBILE_LTD] = {
+    this.reports[this.RESPONSIVE_MOBILE_WEEK] = {
       title: 'Mobile and tablet devices (2016-09-28 to 2016-10-03)',
       request: _request
     };
@@ -186,7 +186,7 @@
 
       this.log(moduleName + '.init()');
 
-      jQuery('#content').append('<p id="loading" style="margin-top: 2em;">Loading data ...</p>');
+      jQuery('#content').append('<p id="loading">Loading data ...</p>');
 
       this.flags.init = true;
 
@@ -212,6 +212,9 @@
       }
     },
     run: function () {
+      // this.runMobile();
+      // this.runResponsive();
+
       this.runMobile()
         .then(function () {
           return this.runResponsive();
@@ -219,8 +222,6 @@
         .then(function () {
           jQuery('#loading').remove();
         });
-
-      // this.runResponsive();
     },
     runMobile: function () {
       return this.queryMobileReports()
@@ -245,10 +246,13 @@
         });
       });
     },
-    displayMobileReports: function (data) {
+    displayMobileReports: function (rows) {
       var knownDevices = [];
 
-      _.forEach(data, function (row) {
+      var knownDeviceIDs = [];
+      var unknownDeviceIDs = [];
+
+      _.forEach(rows, function (row) {
         var device = _.pick(row, [
           'Device Family',
           'Os Family',
@@ -260,27 +264,105 @@
         var width = Number(row['Screen Width']);
         var height = Number(row['Screen Height']);
 
-        if (width && height && _.indexOf(knownDevices, deviceID) < 0) {
-          knownDevices.push(deviceID);
+        if (width && height) {
+          if (_.indexOf(knownDeviceIDs, deviceID) < 0) {
+            knownDeviceIDs.push(deviceID);
+            knownDevices.push(device['Device Family']);
+          }
+        }
+        else {
+          unknownDeviceIDs.push(deviceID);
         }
       });
 
-      var mRows = this.parseMobileRows(data);
+      var mRows = this.parseMobileRows(rows);
+      var mBrowserFamilyRows = this.parseMobileBrowserFamily(rows);
+      var mOsFamilyRows = this.parseMobileOsFamily(rows);
 
-      var mData = this.parseResponsiveData(mRows);
+      var mData = this.parseResponsiveData(mRows, 'width');
+      var mBrowserFamilyData = this.parseResponsiveData(mBrowserFamilyRows, 'browserFamily');
+      var mOsFamilyData = this.parseResponsiveData(mOsFamilyRows, 'osFamily');
 
+      var id;
       var title;
       var columns;
       var xLabel = 'Screen width';
       var yLabel = 'Pageviews';
 
-      title = 'Mobile theme: Top 25 devices by pageviews with known screen size (' + knownDevices.length + ' devices) - 2016-09-28 to 2016-10-03';
+      id = ++this.uniqID;
+      title = 'Mobile theme: Known vs Unknown screen sizes - 2016-09-28 to 2016-10-03';
+      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+
+      c3.generate({
+        bindto: '#chart-' + id,
+        data: {
+          columns: [
+            ['Known screen sizes', knownDeviceIDs.length],
+            ['Unknown screen sizes', unknownDeviceIDs.length]
+          ],
+          type: 'pie'
+        },
+      });
+
+      id = ++this.uniqID;
+      title = 'Mobile theme: OS Family - 2016-09-28 to 2016-10-03';
+      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+
+      c3.generate({
+        bindto: '#chart-' + id,
+        data: {
+          columns: _.map(mOsFamilyData.values, function (value, key) {
+            return [value, mOsFamilyData.metricValues[key]];
+          }),
+          type: 'pie'
+        },
+      });
+
+      id = ++this.uniqID;
+      title = 'Mobile theme: Browser Family - 2016-09-28 to 2016-10-03';
+      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+
+      c3.generate({
+        bindto: '#chart-' + id,
+        data: {
+          columns: _.map(mBrowserFamilyData.values, function (value, key) {
+            return [value, mBrowserFamilyData.metricValues[key]];
+          }),
+          type: 'pie'
+        },
+      });
+
+      title = 'Mobile theme: Devices with known screen size - 2016-09-28 to 2016-10-03 (' + knownDeviceIDs.length + ' of top 25 devices)';
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: yLabel,
         data: mData
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+    },
+    parseMobileBrowserFamily: function (rows) {
+      var parsed = [];
+
+      _.forEach(rows, function (row) {
+        parsed.push({
+          browserFamily: row['Browser Family'],
+          metricValue: Number(row.Pageviews)
+        });
+      });
+
+      return parsed;
+    },
+    parseMobileOsFamily: function (rows) {
+      var parsed = [];
+
+      _.forEach(rows, function (row) {
+        parsed.push({
+          osFamily: row['Os Family'],
+          metricValue: Number(row.Pageviews)
+        });
+      });
+
+      return parsed;
     },
     parseMobileRows: function (rows) {
       var parsed = [];
@@ -362,42 +444,43 @@
 
       return parsed;
     },
-    parseResponsiveData: function (rows) {
-      var widthValues = _.uniq(_.map(rows, function (row) {
-        return row.width;
+    parseResponsiveData: function (rows, column) {
+      var values = _.uniq(_.map(rows, function (row) {
+        return row[column];
       }));
 
-      var metricValues = _.map(widthValues, function (width) {
-        return _.sumBy(_.filter(rows, {
-          'width': width
-        }), function (o) {
+      var metricValues = _.map(values, function (value) {
+        var matches = {};
+        matches[column] = value;
+
+        return _.sumBy(_.filter(rows, matches), function (o) {
           return o.metricValue;
         });
       });
 
       return {
-        widthValues: widthValues,
+        values: values,
         metricValues: metricValues
       };
     },
     buildResponsiveChartColumns: function () {
-      var widthValues = [];
+      var values = [];
 
       _.forEach(arguments, function (arg, index) {
-        widthValues = widthValues.concat(arg.data.widthValues);
+        values = values.concat(arg.data.values);
       });
 
-      widthValues.sort(function (a, b) {
+      values.sort(function (a, b) {
         return a - b;
       });
 
-      widthValues = _.sortedUniq(widthValues);
+      values = _.sortedUniq(values);
 
       var metricValues = [];
 
       _.forEach(arguments, function (arg, index) {
-        var values = _.map(widthValues, function (width) {
-          var i = _.indexOf(arg.data.widthValues, width);
+        var arr = _.map(values, function (width) {
+          var i = _.indexOf(arg.data.values, width);
 
           if (i < 0) {
             return 0;
@@ -407,29 +490,29 @@
           }
         });
 
-        metricValues[index] = [arg.yLabel].concat(values);
+        metricValues[index] = [arg.yLabel].concat(arr);
       });
 
       return [
-        [arguments[0].xLabel].concat(widthValues)
+        [arguments[0].xLabel].concat(values)
       ].concat(metricValues);
     },
     displayResponsiveReports: function (reports) {
       var rDesktop6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_6_MONTHS].response.result.reports[0].data.rows);
       var rDesktopPrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
-      var rDesktopLtdRows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_LTD].response.result.reports[0].data.rows);
+      var rDesktopWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_WEEK].response.result.reports[0].data.rows);
       var rMobile6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_6_MONTHS].response.result.reports[0].data.rows);
       var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
-      var rMobileLtdRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_LTD].response.result.reports[0].data.rows);
+      var rMobileWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_WEEK].response.result.reports[0].data.rows);
 
-      var rDesktop6Data = this.parseResponsiveData(rDesktop6Rows);
-      var rDesktopPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows);
-      var rMobile6Data = this.parseResponsiveData(rMobile6Rows);
-      var rMobilePrev6Data = this.parseResponsiveData(rMobilePrev6Rows);
+      var rDesktop6Data = this.parseResponsiveData(rDesktop6Rows, 'width');
+      var rDesktopPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows, 'width');
+      var rMobile6Data = this.parseResponsiveData(rMobile6Rows, 'width');
+      var rMobilePrev6Data = this.parseResponsiveData(rMobilePrev6Rows, 'width');
 
-      var r6Data = this.parseResponsiveData(rDesktop6Rows.concat(rMobile6Rows));
-      var rPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows));
-      var rLtdData = this.parseResponsiveData(rDesktopLtdRows.concat(rMobileLtdRows));
+      var r6Data = this.parseResponsiveData(rDesktop6Rows.concat(rMobile6Rows), 'width');
+      var rPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows), 'width');
+      var rWeekData = this.parseResponsiveData(rDesktopWeekRows.concat(rMobileWeekRows), 'width');
 
       var title;
       var columns;
@@ -456,7 +539,7 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: yLabel,
-        data: rLtdData
+        data: rWeekData
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -520,16 +603,16 @@
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Legacy breakpoints - Last 6 months';
-      this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), legacyBreakpoints);
-
-      title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
-      this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), frontendComponentsBreakpoints);
+      // title = 'Responsive theme: Legacy breakpoints - Last 6 months';
+      // this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), legacyBreakpoints);
+      //
+      // title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
+      // this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), frontendComponentsBreakpoints);
     },
     plotPageviewsOverWidth: function (id, title, columns, xLabel, yLabel) {
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
 
-      var chart = c3.generate({
+      c3.generate({
         bindto: '#chart-' + id,
         data: {
           x: xLabel,
@@ -600,7 +683,7 @@
 
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
 
-      var chart = c3.generate({
+      c3.generate({
         bindto: '#chart-' + id,
         data: {
           columns: _.map(xValues, function (value, key) {
