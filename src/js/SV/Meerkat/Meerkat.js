@@ -565,7 +565,7 @@
       // });
       // this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months by width';
+      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
@@ -619,30 +619,31 @@
       // title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
       // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), frontendComponentsBreakpoints);
 
-      xLabel = 'Screen size';
-
-      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months by width and height';
+      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months (includes possible orientation change)';
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
-        yLabel: 'Width: ' + reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
+        yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
         data: rDesktopLast6DataWidth
       }, {
         xLabel: xLabel,
-        yLabel: 'Width: ' + reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+        yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
         data: rMobileLast6DataWidth
       }, {
         xLabel: xLabel,
-        yLabel: 'Height: ' + reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
-        data: rDesktopLast6DataHeight
-      }, {
-        xLabel: xLabel,
-        yLabel: 'Height: ' + reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+        yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title + ' (if orientation changed)',
         data: rMobileLast6DataHeight
       });
       this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
+
+      // this.plotPageviewsPie(++this.uniqID, title, [].concat(rDesktopLast6Rows, rMobileLast6Rows));
     },
     plotPageviews: function (id, title, columns, xLabel, yLabel) {
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+
+      var sum = 0;
+      _.forEach(columns.slice(1), function (column) {
+        sum += _.sum(column.slice(1));
+      });
 
       c3.generate({
         bindto: '#chart-' + id,
@@ -664,13 +665,51 @@
         },
         tooltip: {
           format: {
-            value: function (value, ratio, id) {
-              return d3.format(',')(value);
+            value: function (value) {
+              return d3.format(',')(value) + ' (' + d3.format('.1%')(value / sum) + ')';
             }
           }
         }
       });
     },
+    // plotPageviewsPie: function (id, title, rows) {
+    //   var values = {};
+    //
+    //   _.forEach(rows, function (row) {
+    //     _.forEach(['height', 'width'], function (dim) {
+    //       var key = '_' + row[dim];
+    //
+    //       if (_.isUndefined(values[key])) {
+    //         values[key] = row.metricValue;
+    //       }
+    //       else {
+    //         values[key] += row.metricValue;
+    //       }
+    //     });
+    //   });
+    //
+    //   var xValues = _.map(_.keys(values), function (value) {
+    //     return Number(value.substring(1));
+    //   });
+    //
+    //   var yValues = _.values(values);
+    //
+    //   jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+    //
+    //   c3.generate({
+    //     bindto: '#chart-' + id,
+    //     data: {
+    //       columns: _.map(xValues, function (value, key) {
+    //         var label = '' + value;
+    //         return [label, yValues[key]];
+    //       }),
+    //       type: 'pie'
+    //     },
+    //     legend: {
+    //       show: false
+    //     }
+    //   });
+    // },
     findBreakpoint: function (width, breakpoints) {
       var count = breakpoints.length;
 
@@ -723,7 +762,7 @@
             return [label, _.sum(yValues[key])];
           }),
           type: 'pie'
-        },
+        }
       });
     }
   };
