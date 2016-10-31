@@ -425,7 +425,7 @@
           return Promise.resolve(this.reports);
         }.bind(this));
     },
-    parseResponsiveRows: function (rows) {
+    parseResponsiveRows: function (rows, orderBy) {
       var parsed = [];
 
       _.forEach(rows, function (row) {
@@ -443,7 +443,7 @@
         });
       });
 
-      parsed = _.orderBy(parsed, 'width');
+      parsed = _.orderBy(parsed, orderBy);
 
       return parsed;
     },
@@ -501,17 +501,24 @@
       ].concat(metricValues);
     },
     displayResponsiveReports: function (reports) {
-      var rDesktopLast6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].response.result.reports[0].data.rows);
-      var rDesktopPrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
-      var rDesktopWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_WEEK].response.result.reports[0].data.rows);
-      var rMobileLast6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].response.result.reports[0].data.rows);
-      var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
-      var rMobileWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_WEEK].response.result.reports[0].data.rows);
+      var rDesktopLast6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].response.result.reports[0].data.rows, 'width');
+      var rDesktopPrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows, 'width');
+      var rDesktopWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_WEEK].response.result.reports[0].data.rows, 'width');
+      var rMobileLast6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].response.result.reports[0].data.rows, 'width');
+      var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows, 'width');
+      var rMobileWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_WEEK].response.result.reports[0].data.rows, 'width');
 
       var rDesktopLast6DataWidth = this.parseResponsiveData(rDesktopLast6Rows, 'width');
+      var rDesktopLast6DataHeight = this.parseResponsiveData(rDesktopLast6Rows, 'height');
+
       var rDesktopPrev6DataWidth = this.parseResponsiveData(rDesktopPrev6Rows, 'width');
+      var rDesktopPrev6DataHeight = this.parseResponsiveData(rDesktopPrev6Rows, 'height');
+
       var rMobileLast6DataWidth = this.parseResponsiveData(rMobileLast6Rows, 'width');
+      var rMobileLast6DataHeight = this.parseResponsiveData(rMobileLast6Rows, 'height');
+
       var rMobilePrev6DataWidth = this.parseResponsiveData(rMobilePrev6Rows, 'width');
+      var rMobilePrev6DataHeight = this.parseResponsiveData(rMobilePrev6Rows, 'height');
 
       var rLast6DataWidth = this.parseResponsiveData(rDesktopLast6Rows.concat(rMobileLast6Rows), 'width');
       var rPrev6DataWidth = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows), 'width');
@@ -538,27 +545,27 @@
       var xLabel = 'Screen width';
       var yLabel = 'Pageviews';
 
-      title = 'Responsive theme: 2016-09-28 to 2016-10-03';
-      columns = this.buildResponsiveChartColumns({
-        xLabel: xLabel,
-        yLabel: yLabel,
-        data: rWeekDataWidth
-      });
-      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
+      // title = 'Responsive theme: 2016-09-28 to 2016-10-03';
+      // columns = this.buildResponsiveChartColumns({
+      //   xLabel: xLabel,
+      //   yLabel: yLabel,
+      //   data: rWeekDataWidth
+      // });
+      // this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
+      //
+      // title = 'Responsive theme: Last 6 months v Previous 6 months';
+      // columns = this.buildResponsiveChartColumns({
+      //   xLabel: xLabel,
+      //   yLabel: '2015-10-01 to 2016-04-01',
+      //   data: rPrev6DataWidth
+      // }, {
+      //   xLabel: xLabel,
+      //   yLabel: '2016-04-01 to 2016-10-01',
+      //   data: rLast6DataWidth
+      // });
+      // this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Last 6 months v Previous 6 months';
-      columns = this.buildResponsiveChartColumns({
-        xLabel: xLabel,
-        yLabel: '2015-10-01 to 2016-04-01',
-        data: rPrev6DataWidth
-      }, {
-        xLabel: xLabel,
-        yLabel: '2016-04-01 to 2016-10-01',
-        data: rLast6DataWidth
-      });
-      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
-
-      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
+      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months by width';
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
@@ -570,47 +577,69 @@
       });
       this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
-      title = 'Responsive theme: Desktop v Mobile devices - Previous 6 months';
-      columns = this.buildResponsiveChartColumns({
-        xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
-        data: rDesktopPrev6DataWidth
-      }, {
-        xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
-        data: rMobilePrev6DataWidth
-      });
-      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
-
-      title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop devices';
-      columns = this.buildResponsiveChartColumns({
-        xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
-        data: rDesktopPrev6DataWidth
-      }, {
-        xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
-        data: rDesktopLast6DataWidth
-      });
-      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
-
-      title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile devices';
-      columns = this.buildResponsiveChartColumns({
-        xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
-        data: rMobilePrev6DataWidth
-      }, {
-        xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
-        data: rMobileLast6DataWidth
-      });
-      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
+      // title = 'Responsive theme: Desktop v Mobile devices - Previous 6 months';
+      // columns = this.buildResponsiveChartColumns({
+      //   xLabel: xLabel,
+      //   yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
+      //   data: rDesktopPrev6DataWidth
+      // }, {
+      //   xLabel: xLabel,
+      //   yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
+      //   data: rMobilePrev6DataWidth
+      // });
+      // this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
+      //
+      // title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop devices';
+      // columns = this.buildResponsiveChartColumns({
+      //   xLabel: xLabel,
+      //   yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
+      //   data: rDesktopPrev6DataWidth
+      // }, {
+      //   xLabel: xLabel,
+      //   yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
+      //   data: rDesktopLast6DataWidth
+      // });
+      // this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
+      //
+      // title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile devices';
+      // columns = this.buildResponsiveChartColumns({
+      //   xLabel: xLabel,
+      //   yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
+      //   data: rMobilePrev6DataWidth
+      // }, {
+      //   xLabel: xLabel,
+      //   yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+      //   data: rMobileLast6DataWidth
+      // });
+      // this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       // title = 'Responsive theme: Legacy breakpoints - Last 6 months';
       // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), legacyBreakpoints);
       //
       // title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
       // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), frontendComponentsBreakpoints);
+
+      xLabel = 'Screen size';
+
+      title = 'Responsive theme: Desktop v Mobile devices - Last 6 months by width and height';
+      columns = this.buildResponsiveChartColumns({
+        xLabel: xLabel,
+        yLabel: 'Width: ' + reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
+        data: rDesktopLast6DataWidth
+      }, {
+        xLabel: xLabel,
+        yLabel: 'Width: ' + reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+        data: rMobileLast6DataWidth
+      }, {
+        xLabel: xLabel,
+        yLabel: 'Height: ' + reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
+        data: rDesktopLast6DataHeight
+      }, {
+        xLabel: xLabel,
+        yLabel: 'Height: ' + reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+        data: rMobileLast6DataHeight
+      });
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
     },
     plotPageviews: function (id, title, columns, xLabel, yLabel) {
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
