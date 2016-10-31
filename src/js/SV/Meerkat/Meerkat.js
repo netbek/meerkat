@@ -341,7 +341,7 @@
         yLabel: yLabel,
         data: mData
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
     },
     parseMobileBrowserFamily: function (rows) {
       var parsed = [];
@@ -544,7 +544,7 @@
         yLabel: yLabel,
         data: rWeekDataWidth
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months';
       columns = this.buildResponsiveChartColumns({
@@ -556,7 +556,7 @@
         yLabel: '2016-04-01 to 2016-10-01',
         data: rLast6DataWidth
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
       columns = this.buildResponsiveChartColumns({
@@ -568,7 +568,7 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
         data: rMobileLast6DataWidth
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Desktop v Mobile devices - Previous 6 months';
       columns = this.buildResponsiveChartColumns({
@@ -580,7 +580,7 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
         data: rMobilePrev6DataWidth
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months - Desktop devices';
       columns = this.buildResponsiveChartColumns({
@@ -592,7 +592,7 @@
         yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
         data: rDesktopLast6DataWidth
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Last 6 months v Previous 6 months - Mobile devices';
       columns = this.buildResponsiveChartColumns({
@@ -604,7 +604,7 @@
         yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
         data: rMobileLast6DataWidth
       });
-      this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
+      this.plotPageviews(++this.uniqID, title, columns, xLabel, yLabel);
 
       // title = 'Responsive theme: Legacy breakpoints - Last 6 months';
       // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), legacyBreakpoints);
@@ -612,7 +612,7 @@
       // title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
       // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), frontendComponentsBreakpoints);
     },
-    plotPageviewsOverWidth: function (id, title, columns, xLabel, yLabel) {
+    plotPageviews: function (id, title, columns, xLabel, yLabel) {
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
 
       c3.generate({
