@@ -25,10 +25,10 @@
    */
   function Meerkat(config) {
     this.RESPONSIVE_DESKTOP_WEEK = 'rDesktopWeek';
-    this.RESPONSIVE_DESKTOP_6_MONTHS = 'rDesktop6Months';
+    this.RESPONSIVE_DESKTOP_LAST_6_MONTHS = 'rDesktopLast6Months';
     this.RESPONSIVE_DESKTOP_PREV_6_MONTHS = 'rDesktopPrevious6Months';
     this.RESPONSIVE_MOBILE_WEEK = 'rMobileWeek';
-    this.RESPONSIVE_MOBILE_6_MONTHS = 'rMobile6Months';
+    this.RESPONSIVE_MOBILE_LAST_6_MONTHS = 'rMobileLast6Months';
     this.RESPONSIVE_MOBILE_PREV_6_MONTHS = 'rMobilePrevious6Months';
 
     this.config = jQuery.extend({
@@ -137,7 +137,7 @@
       startDate: '2016-04-01',
       endDate: '2016-10-01'
     }];
-    this.reports[this.RESPONSIVE_DESKTOP_6_MONTHS] = {
+    this.reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS] = {
       title: 'Desktop devices (2016-04-01 to 2016-10-01)',
       request: _request
     };
@@ -167,7 +167,7 @@
       startDate: '2016-04-01',
       endDate: '2016-10-01'
     }];
-    this.reports[this.RESPONSIVE_MOBILE_6_MONTHS] = {
+    this.reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS] = {
       title: 'Mobile and tablet devices (2016-04-01 to 2016-10-01)',
       request: _request
     };
@@ -501,19 +501,19 @@
       ].concat(metricValues);
     },
     displayResponsiveReports: function (reports) {
-      var rDesktop6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_6_MONTHS].response.result.reports[0].data.rows);
+      var rDesktopLast6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].response.result.reports[0].data.rows);
       var rDesktopPrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].response.result.reports[0].data.rows);
       var rDesktopWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_DESKTOP_WEEK].response.result.reports[0].data.rows);
-      var rMobile6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_6_MONTHS].response.result.reports[0].data.rows);
+      var rMobileLast6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].response.result.reports[0].data.rows);
       var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
       var rMobileWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_WEEK].response.result.reports[0].data.rows);
 
-      var rDesktop6Data = this.parseResponsiveData(rDesktop6Rows, 'width');
+      var rDesktopLast6Data = this.parseResponsiveData(rDesktopLast6Rows, 'width');
       var rDesktopPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows, 'width');
-      var rMobile6Data = this.parseResponsiveData(rMobile6Rows, 'width');
+      var rMobileLast6Data = this.parseResponsiveData(rMobileLast6Rows, 'width');
       var rMobilePrev6Data = this.parseResponsiveData(rMobilePrev6Rows, 'width');
 
-      var r6Data = this.parseResponsiveData(rDesktop6Rows.concat(rMobile6Rows), 'width');
+      var rLast6Data = this.parseResponsiveData(rDesktopLast6Rows.concat(rMobileLast6Rows), 'width');
       var rPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows), 'width');
       var rWeekData = this.parseResponsiveData(rDesktopWeekRows.concat(rMobileWeekRows), 'width');
 
@@ -554,19 +554,19 @@
       }, {
         xLabel: xLabel,
         yLabel: '2016-04-01 to 2016-10-01',
-        data: r6Data
+        data: rLast6Data
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
       title = 'Responsive theme: Desktop v Mobile devices - Last 6 months';
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
-        data: rDesktop6Data
+        yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
+        data: rDesktopLast6Data
       }, {
         xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
-        data: rMobile6Data
+        yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+        data: rMobileLast6Data
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -589,8 +589,8 @@
         data: rDesktopPrev6Data
       }, {
         xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_DESKTOP_6_MONTHS].title,
-        data: rDesktop6Data
+        yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
+        data: rDesktopLast6Data
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -601,16 +601,16 @@
         data: rMobilePrev6Data
       }, {
         xLabel: xLabel,
-        yLabel: reports[this.RESPONSIVE_MOBILE_6_MONTHS].title,
-        data: rMobile6Data
+        yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
+        data: rMobileLast6Data
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
       // title = 'Responsive theme: Legacy breakpoints - Last 6 months';
-      // this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), legacyBreakpoints);
+      // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), legacyBreakpoints);
       //
       // title = 'Responsive theme: frontend-components breakpoints - Last 6 months';
-      // this.plotBreakpoints(++this.uniqID, title, rDesktop6Rows.concat(rMobile6Rows), frontendComponentsBreakpoints);
+      // this.plotBreakpoints(++this.uniqID, title, rDesktopLast6Rows.concat(rMobileLast6Rows), frontendComponentsBreakpoints);
     },
     plotPageviewsOverWidth: function (id, title, columns, xLabel, yLabel) {
       jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
