@@ -508,14 +508,14 @@
       var rMobilePrev6Rows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].response.result.reports[0].data.rows);
       var rMobileWeekRows = this.parseResponsiveRows(reports[this.RESPONSIVE_MOBILE_WEEK].response.result.reports[0].data.rows);
 
-      var rDesktopLast6Data = this.parseResponsiveData(rDesktopLast6Rows, 'width');
-      var rDesktopPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows, 'width');
-      var rMobileLast6Data = this.parseResponsiveData(rMobileLast6Rows, 'width');
-      var rMobilePrev6Data = this.parseResponsiveData(rMobilePrev6Rows, 'width');
+      var rDesktopLast6DataWidth = this.parseResponsiveData(rDesktopLast6Rows, 'width');
+      var rDesktopPrev6DataWidth = this.parseResponsiveData(rDesktopPrev6Rows, 'width');
+      var rMobileLast6DataWidth = this.parseResponsiveData(rMobileLast6Rows, 'width');
+      var rMobilePrev6DataWidth = this.parseResponsiveData(rMobilePrev6Rows, 'width');
 
-      var rLast6Data = this.parseResponsiveData(rDesktopLast6Rows.concat(rMobileLast6Rows), 'width');
-      var rPrev6Data = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows), 'width');
-      var rWeekData = this.parseResponsiveData(rDesktopWeekRows.concat(rMobileWeekRows), 'width');
+      var rLast6DataWidth = this.parseResponsiveData(rDesktopLast6Rows.concat(rMobileLast6Rows), 'width');
+      var rPrev6DataWidth = this.parseResponsiveData(rDesktopPrev6Rows.concat(rMobilePrev6Rows), 'width');
+      var rWeekDataWidth = this.parseResponsiveData(rDesktopWeekRows.concat(rMobileWeekRows), 'width');
 
       var title;
       var columns;
@@ -542,7 +542,7 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: yLabel,
-        data: rWeekData
+        data: rWeekDataWidth
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -550,11 +550,11 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: '2015-10-01 to 2016-04-01',
-        data: rPrev6Data
+        data: rPrev6DataWidth
       }, {
         xLabel: xLabel,
         yLabel: '2016-04-01 to 2016-10-01',
-        data: rLast6Data
+        data: rLast6DataWidth
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -562,11 +562,11 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
-        data: rDesktopLast6Data
+        data: rDesktopLast6DataWidth
       }, {
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
-        data: rMobileLast6Data
+        data: rMobileLast6DataWidth
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -574,11 +574,11 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
-        data: rDesktopPrev6Data
+        data: rDesktopPrev6DataWidth
       }, {
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
-        data: rMobilePrev6Data
+        data: rMobilePrev6DataWidth
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -586,11 +586,11 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_PREV_6_MONTHS].title,
-        data: rDesktopPrev6Data
+        data: rDesktopPrev6DataWidth
       }, {
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_DESKTOP_LAST_6_MONTHS].title,
-        data: rDesktopLast6Data
+        data: rDesktopLast6DataWidth
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
@@ -598,11 +598,11 @@
       columns = this.buildResponsiveChartColumns({
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_MOBILE_PREV_6_MONTHS].title,
-        data: rMobilePrev6Data
+        data: rMobilePrev6DataWidth
       }, {
         xLabel: xLabel,
         yLabel: reports[this.RESPONSIVE_MOBILE_LAST_6_MONTHS].title,
-        data: rMobileLast6Data
+        data: rMobileLast6DataWidth
       });
       this.plotPageviewsOverWidth(++this.uniqID, title, columns, xLabel, yLabel);
 
