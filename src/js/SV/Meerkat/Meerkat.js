@@ -638,12 +638,62 @@
       // this.plotPageviewsPie(++this.uniqID, title, [].concat(rDesktopLast6Rows, rMobileLast6Rows));
     },
     plotPageviews: function (id, title, columns, xLabel, yLabel) {
-      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /></section>');
+      jQuery('#content').append('<section><header><h3>' + title + '</h3></header><div id="chart-' + id + '" /><div id="table-' + id + '" /></section>');
 
+      var metricValueColumns = columns.slice(1);
       var sum = 0;
-      _.forEach(columns.slice(1), function (column) {
+
+      _.forEach(metricValueColumns, function (column) {
         sum += _.sum(column.slice(1));
       });
+
+      var metricValuesObj = {};
+
+      _.forEach(columns[0].slice(1), function (value, index) {
+        var key = '_' + value;
+        metricValuesObj[key] = 0;
+      });
+
+      _.forEach(columns[0], function (value, index) {
+        // Ignore label (first index)
+        if (index === 0) {
+          return;
+        }
+
+        var key = '_' + value;
+        metricValuesObj[key] = 0;
+
+        _.forEach(metricValueColumns, function (metricValueColumn) {
+          metricValuesObj[key] += metricValueColumn[index];
+        });
+      });
+
+      var metricValuesArr = [];
+
+      _.forEach(metricValuesObj, function (metricValue, value) {
+        var pct = metricValue / sum;
+        metricValuesArr.push({
+          value: Number(value.substring(1)),
+          metricValue: metricValue,
+          pct: pct,
+          pctFormatted: d3.format('.1%')(pct)
+        });
+      });
+
+      metricValuesArr.sort(function (a, b) {
+        return b.metricValue - a.metricValue;
+      });
+
+      var html = '';
+
+      _.forEach(metricValuesArr.slice(0, 25), function (value) {
+        if (value === 0) {
+          return;
+        }
+        html += '<tr><td>' + value.value + '</td><td>' + value.pctFormatted + '</td><td>' + value.metricValue + '</td></tr>';
+      });
+
+      jQuery('#table-' + id).html('<table class="table table-striped table-bordered"><tr><th>#</th><th>%</th><th>Value</th></tr>' + html + '</table>');
 
       c3.generate({
         bindto: '#chart-' + id,
